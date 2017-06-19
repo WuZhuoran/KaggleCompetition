@@ -1,6 +1,12 @@
+# This Python 3 environment comes with many helpful analytics libraries installed
+# It is defined by the kaggle/python docker image: https://github.com/kaggle/docker-python
+# For example, here's several helpful packages to load in
+
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
 from sklearn.preprocessing import LabelEncoder
+import seaborn as sns
+import matplotlib.pyplot as plt
 import xgboost as xgb
 import pandas as pd  # data processing, CSV file I/O (e.g. pd.read_csv)
 from sklearn.linear_model import ElasticNetCV, LassoLarsCV
@@ -14,7 +20,6 @@ from sklearn.random_projection import SparseRandomProjection
 from sklearn.decomposition import PCA, FastICA
 from sklearn.decomposition import TruncatedSVD
 from sklearn.metrics import r2_score
-
 
 class StackingEstimator(BaseEstimator, TransformerMixin):
     def __init__(self, estimator):
@@ -49,7 +54,8 @@ for c in train.columns:
 
 n_comp = 12
 
-# Feature Engineering
+# feature engineering
+# Encoding to categorical features
 
 # tSVD
 tsvd = TruncatedSVD(n_components=n_comp, random_state=420)
@@ -106,6 +112,30 @@ id_test = test['ID'].values
 finaltrainset = train[usable_columns].values
 finaltestset = test[usable_columns].values
 
+# These are categorical columns:
+cat_cols = ['X0', 'X1', 'X2', 'X3', 'X4', 'X5', 'X6', 'X8']
+
+def add_new_col(x):
+    if x not in new_col.keys():
+        # set n/2 x if is contained in test, but not in train
+        # (n is the number of unique labels in train)
+        # or an alternative could be -100 (something out of range [0; n-1]
+        return len(new_col.keys())/2
+    return new_col[x] # rank of the label
+
+for c in cat_cols:
+    # get labels and corresponding means
+    new_col = train.groupby(c).y.mean().sort_values().reset_index()
+    # make a dictionary, where key is a label and value is the rank of that label
+    new_col = new_col.reset_index().set_index(c).drop('y', axis=1)['index'].to_dict()
+    # add new column to the dataframe
+    train[c + '_new'] = train[c].apply(add_new_col)
+    test[c + '_new'] = test[c].apply(add_new_col)
+
+# drop old categorical columns
+train = train.drop(cat_cols, axis=1)
+test = test.drop(cat_cols,axis=1)
+
 '''Train the xgb model then predict the test data'''
 
 xgb_params = {
@@ -121,7 +151,11 @@ xgb_params = {
 # NOTE: Make sure that the class is labeled 'class' in the data file
 
 dtrain = xgb.DMatrix(train.drop('y', axis=1), y_train)
+# dtrain = xgb.DMatrix(df_new.drop('y', axis=1), y_train)
 dtest = xgb.DMatrix(test)
+
+print(dtrain.feature_names)
+print(dtest.feature_names)
 
 num_boost_rounds = 1250
 # train model
