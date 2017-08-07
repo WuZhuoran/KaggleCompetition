@@ -369,18 +369,19 @@ xgb_params = {
     ,"alpha"            :2e-05
     ,"lambda"           :10
 }
+
+num_boost_rounts = 400
 #############################################cross_validation################################
 print('Model cv: \n')
-cv_output = xgb.cv(xgb_params, d_train, num_boost_round=200, early_stopping_rounds=20, verbose_eval=10,
-                          show_stdv=False)
+# cv_output = xgb.cv(xgb_params, d_train, num_boost_round=num_boost_rounts, early_stopping_rounds=20, verbose_eval=10, show_stdv=False)
 
-#cv_output[['train-logloss-mean', 'test-logloss-mean']]
+# print(cv_output[['train-logloss-mean', 'test-logloss-mean']])
 
 ############################################train+F1########################################
-'''
+
 print('Model train: \n')
 watchlist= [(d_train, "train")]
-bst = xgb.train(params=xgb_params, dtrain=d_train, num_boost_round=180, evals=watchlist, verbose_eval=10)
+bst = xgb.train(params=xgb_params, dtrain=d_train, num_boost_round=num_boost_rounts, evals=watchlist, verbose_eval=10)
 #bst.save_model('../model/base_xgbmodel.model')
 xgb.plot_importance(bst)
 
@@ -443,6 +444,6 @@ df_ef1.products=df_ef1.products.map(filterProduct)
 #同一个order的product放入一个list中
 output=df_ef1.groupby(['order_id']).apply(lambda x: ' '.join(x['products']))
 result=pd.DataFrame({'products':output})
-result.to_csv('sub.csv', index=False)
-'''
+result.to_csv('xgb_sub.csv', index=False)
+
 ######################################################################################################
