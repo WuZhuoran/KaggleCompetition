@@ -81,49 +81,49 @@ class F1Optimizer():
         return (1.0 + beta_squared) * tp / ((1.0 + beta_squared) * tp + fp + beta_squared * fn)
 
 def print_best_prediction(P, pNone=None):
-    print("Maximize F1-Expectation")
-    print("=" * 23)
+    # print("Maximize F1-Expectation")
+    # print("=" * 23)
     P = np.sort(P)[::-1]
     n = P.shape[0]
     L = ['L{}'.format(i + 1) for i in range(n)]
 
     if pNone is None:
-        print("Estimate p(None|x) as (1-p_1)*(1-p_2)*...*(1-p_n)")
+        # print("Estimate p(None|x) as (1-p_1)*(1-p_2)*...*(1-p_n)")
         pNone = (1.0 - P).prod()
 
     PL = ['p({}|x)={}'.format(l, p) for l, p in zip(L, P)]
-    print("Posteriors: {} (n={})".format(PL, n))
-    print("p(None|x)={}".format(pNone))
+    # print("Posteriors: {} (n={})".format(PL, n))
+    # print("p(None|x)={}".format(pNone))
 
     opt = F1Optimizer.maximize_expectation(P, pNone)
     best_prediction = ['None'] if opt[1] else []
     best_prediction += (L[:opt[0]])
     f1_max = opt[2]
 
-    print("Prediction {} yields best E[F1] of {}\n".format(best_prediction, f1_max))
+    # print("Prediction {} yields best E[F1] of {}\n".format(best_prediction, f1_max))
 
 def cal_ef1(P, pNone=None):
-    print("Maximize F1-Expectation")
-    print("=" * 23)
+    # print("Maximize F1-Expectation")
+    # print("=" * 23)
     P = np.sort(P)[::-1]
     n = P.shape[0]
     L = ['L{}'.format(i + 1) for i in range(n)]
 
     if pNone is None:
-        print("Estimate p(None|x) as (1-p_1)*(1-p_2)*...*(1-p_n)")
+        # print("Estimate p(None|x) as (1-p_1)*(1-p_2)*...*(1-p_n)")
         pNone = (1.0 - P).prod()
 
     PL = ['p({}|x)={}'.format(l, p) for l, p in zip(L, P)]
-    print("Posteriors: {} (n={})".format(PL, n))
-    print("p(None|x)={}".format(pNone))
+    # print("Posteriors: {} (n={})".format(PL, n))
+    # print("p(None|x)={}".format(pNone))
 
     opt = F1Optimizer.maximize_expectation(P, pNone)
     prediction_none = ['None'] if opt[1] else []
     #best_prediction += (L[:opt[0]])
     f1_max = opt[2]
-    print(opt[0])
+    # print(opt[0])
     #opt[0]b表示best_k的数目，best_prediction是否有none
-    print("Prediction {} yields best E[F1] of {}\n".format(opt[0], f1_max))
+    # print("Prediction {} yields best E[F1] of {}\n".format(opt[0], f1_max))
     #返回best_k和是否带有none
     return (opt[0],prediction_none)
 

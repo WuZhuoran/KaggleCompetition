@@ -1,7 +1,7 @@
 import pandas as pd
 
 baseline = pd.read_csv('stack_baseline.csv')
-result = pd.read_csv('sub.csv')
+result = pd.read_csv('xgb_sub.csv')
 
 result['order_id'] = baseline['order_id']
 result = result[['order_id', 'products']]

@@ -370,7 +370,7 @@ xgb_params = {
     ,"lambda"           :10
 }
 
-num_boost_rounts = 400
+num_boost_rounts = 800
 #############################################cross_validation################################
 print('Model cv: \n')
 # cv_output = xgb.cv(xgb_params, d_train, num_boost_round=num_boost_rounts, early_stopping_rounds=20, verbose_eval=10, show_stdv=False)

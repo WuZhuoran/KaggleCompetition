@@ -366,12 +366,11 @@ params = {
     'num_leaves': 512,
     'max_depth': 10,
     'feature_fraction': 0.9,
-    'bagging_fraction': 0.7,
     'bagging_freq': 1,
     'verbose':0,
     'learning_rate':0.1
 }
-ROUNDS = 400
+ROUNDS = 100
 #############################################cross_validation################################
 print('Model cv: \n')
 # cv_output = lgb.cv(params, d_train, num_boost_round=400, early_stopping_rounds=20, verbose_eval=10, show_stdv=False)
@@ -382,14 +381,15 @@ print('Model cv: \n')
 
 print('Model train: \n')
 watchlist= [(d_train, "train")]
-bst = lgb.train(params, d_train, ROUNDS, verbose_eval=10)
+bst = lgb.train(params, d_train, ROUNDS)
 #bst.save_model('../model/base_xgbmodel.model')
 
+# d_test = lgb.Dataset(X_test.drop(['eval_set', 'user_id', 'order_id', 'reordered', 'product_id'], axis=1))
 d_test = lgb.Dataset(X_test.drop(['eval_set', 'user_id', 'order_id', 'reordered', 'product_id'], axis=1))
 
-X_test['pred']=bst.predict(d_test)
+X_test['pred']=bst.predict(X_test.drop(['eval_set', 'user_id', 'order_id', 'reordered', 'product_id'], axis=1))
 
-X_test.to_csv('lgb_middle.csv',index=False)
+# X_test.to_csv('lgb_middle.csv',index=False)
 
 ###################################################F1计算
 
@@ -411,18 +411,18 @@ def calculate(test_group):
 
     df = test_group.copy()
     order_id = np.int(df.iloc[0]['order_id'])
-    print(order_id)
+    # print(order_id)
 
     products, preds = (zip(*df.sort_values('pred', ascending=False)[['product_id', 'pred']].values))
-    print(products)
+    # print(products)
     products=np.array(products).astype(str)
-    print(products)
+    # print(products)
 
     (topk,best_none)=F1_faron.cal_ef1(preds)
 
-    print(best_none)
+    # print(best_none)
     productslist=np.hstack((products[:topk],best_none))
-    print(productslist)
+    # print(productslist)
 
     return pd.DataFrame({'order_id':order_id,'products':productslist})
 
