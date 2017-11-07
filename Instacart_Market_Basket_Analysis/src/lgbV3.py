@@ -331,8 +331,17 @@ data['_up_order_rate_since_first_order'] = data._up_order_count / (data._user_to
 train = train.merge(right=orders[['order_id', 'user_id']], how='left', on='order_id')
 data = data.merge(train[['user_id', 'product_id', 'reordered']], on=['user_id', 'product_id'], how='left')
 
+###########################
+#add product embeddings
+product_embeddings=pd.read_pickle('product_embeddings.pkl')
+data = data.merge(product_embeddings,on=['product_id'],how='left')
+del data['product_name']
+# data.to_csv('data_embeddings.csv',index=False,encoding= u'utf-8')
+
+###########################
+
 # release Memory
-del train, prd, users
+del train, prd, users, product_embeddings
 # gc.collect()
 # release Memory
 del priors_orders_detail, orders
@@ -348,6 +357,9 @@ train = data.loc[data.eval_set == "train",:]
 train.drop(['eval_set', 'user_id', 'product_id', 'order_id'], axis=1, inplace=True)
 train.loc[:, 'reordered'] = train.reordered.fillna(0)
 
+train.to_pickle('data.pkl')
+print('data to pickle done')
+
 X_test = data.loc[data.eval_set == "test",:]
 
 # subsample 让training时间更短
@@ -358,6 +370,7 @@ y_train = train.reordered
 
 d_train = lgb.Dataset(X_train,label=y_train)
 
+'''
 params = {
     'task': 'train',
     'boosting_type': 'gbdt',
@@ -370,10 +383,26 @@ params = {
     'verbose':0,
     'learning_rate':0.1
 }
-ROUNDS = 100
+'''
+
+params = {
+    'task': 'train',
+    'boosting_type': 'gbdt',
+    'objective': 'binary',
+    'metric': {'binary_logloss', 'auc'},
+    'num_leaves': 256,
+    'min_sum_hessian_in_leaf': 20,
+    'max_depth': 12,
+    'learning_rate': 0.05,
+    'feature_fraction': 0.6,
+    # 'bagging_fraction': 0.9,
+    # 'bagging_freq': 3,
+    'verbose': 1
+}
+ROUNDS = 380
 #############################################cross_validation################################
 print('Model cv: \n')
-# cv_output = lgb.cv(params, d_train, num_boost_round=400, early_stopping_rounds=20, verbose_eval=10, show_stdv=False)
+# cv_output = lgb.cv(params, d_train, num_boost_round=ROUNDS, early_stopping_rounds=20, verbose_eval=10, show_stdv=False)
 
 # cv_output[['train-logloss-mean', 'test-logloss-mean']]
 
@@ -381,7 +410,8 @@ print('Model cv: \n')
 
 print('Model train: \n')
 watchlist= [(d_train, "train")]
-bst = lgb.train(params, d_train, ROUNDS)
+
+bst = lgb.train(params, d_train, ROUNDS, verbose_eval=10)
 #bst.save_model('../model/base_xgbmodel.model')
 
 # d_test = lgb.Dataset(X_test.drop(['eval_set', 'user_id', 'order_id', 'reordered', 'product_id'], axis=1))
@@ -389,7 +419,7 @@ d_test = lgb.Dataset(X_test.drop(['eval_set', 'user_id', 'order_id', 'reordered'
 
 X_test['pred']=bst.predict(X_test.drop(['eval_set', 'user_id', 'order_id', 'reordered', 'product_id'], axis=1))
 
-# X_test.to_csv('lgb_middle.csv',index=False)
+X_test.to_csv('lgb_middle.csv',index=False)
 
 ###################################################F1计算
 
